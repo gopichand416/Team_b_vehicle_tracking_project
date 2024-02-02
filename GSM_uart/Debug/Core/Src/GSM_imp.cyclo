@@ -1,0 +1,6 @@
+GSM_imp.c:12:5:gsm_connect_to_server	35
+GSM_imp.c:265:5:check_server_connection	2
+GSM_imp.c:282:5:gsm_disconnect_to_server	3
+GSM_imp.c:307:5:check_signal	15
+GSM_imp.c:352:5:connect_tcp_server	18
+GSM_imp.c:478:5:check_REG_NETWORK	12

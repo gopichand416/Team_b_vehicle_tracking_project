@@ -1,0 +1,6 @@
+../Core/Src/GSM_imp.c:12:5:gsm_connect_to_server	16	static
+../Core/Src/GSM_imp.c:265:5:check_server_connection	16	static
+../Core/Src/GSM_imp.c:282:5:gsm_disconnect_to_server	16	static
+../Core/Src/GSM_imp.c:307:5:check_signal	32	static
+../Core/Src/GSM_imp.c:352:5:connect_tcp_server	24	static
+../Core/Src/GSM_imp.c:478:5:check_REG_NETWORK	32	static
