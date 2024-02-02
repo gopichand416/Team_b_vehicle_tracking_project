@@ -224,7 +224,7 @@ int gsm_connect_to_server()
 				  				else
 				  				{
 				  					printf("state = %d substate = %d \n",state,substate);
-				  					state=6;
+				  					state=7;
 				  					substate=0;
 				  				}
 				  				break;
@@ -264,18 +264,37 @@ int gsm_connect_to_server()
 }
 int check_server_connection()
 {
-	char *str =send_to_gsm("AT+CIPOPEN?\r");
-		char *ptr;
-		    ptr=strstr(str,"139.59.78.252");
-		    if(ptr)
-		    {
-		        printf("tcp connection established\n");
-		        return 0;
-		    }
-		    else{
-		        printf("tcp connection NOT established\n");
-		        return 1;
-		    }
+	int state=0,substate=0;
+	int time_out=30;
+	while(time_out)
+	{
+		switch(state)
+		{
+		case 0:
+			str =send_to_gsm("AT+CIPOPEN?\r");
+			if(strstr(str,"ERROR")!=NULL)
+			{
+				state=0;
+			}
+			else
+			{
+				substate=1;
+			}
+		case 1:
+			if(strstr(str,"139.59.78.252")!=NULL)
+			{
+				printf("tcp connection established\n");
+				return 0;
+			}
+			else
+			{
+				printf("tcp connection NOT established\n");
+				return 1;
+			}
+
+		}
+	}
+	return 1;
 }
 
 
@@ -363,7 +382,7 @@ int connect_tcp_server()
 		switch(substate)
 		{
 		case 0:
-			str=send_to_gsm("AT+CIPMODE?\r");
+			str=send_to_gsm("AT+CIPMODE?\r\n");
 			if(strstr(str,"+CIPMODE: 0"))
 			{
 				state=1;
@@ -375,7 +394,7 @@ int connect_tcp_server()
 			}
 			break;
 		case 1:
-			str=send_to_gsm("AT+CIPMODE=0\r");
+			str=send_to_gsm("AT+CIPMODE=0\r\n");
 			if(strstr(str,"OK"))
 			{
 				state=0;
@@ -394,7 +413,7 @@ int connect_tcp_server()
 		switch(substate)
 		{
 		case 0:
-			str = send_to_gsm("AT+NETOPEN\r");
+			str = send_to_gsm("AT+NETOPEN\r\n");
 			//HAL_Delay(1000);
 			printf("NETOPEN\n");
 			if(!(strncmp(str,"\r\nOK\r\n",6)))
@@ -439,7 +458,7 @@ int connect_tcp_server()
 			{
 				printf("state = %d substate = %d \n",state,substate);
 				state=3;
-				substate=1;
+				substate=0;
 			}
 			else
 			{
@@ -459,10 +478,28 @@ int connect_tcp_server()
 			else
 			{
 				printf("state = %d substate = %d \n",state,substate);
+				//state=0;
+				substate=2;
+			}
+			break;
+		case 2:
+			//if((strstr(str,"ERROR")!=NULL))
+			if(!(strncmp(str,"\r\nERROR\r\n",6)))
+			{
+				printf("state = %d substate = %d \n",state,substate);
+				//state=3;
+				substate=0;
+
+			}
+			else
+			{
+				printf("state = %d substate = %d \n",state,substate);
 				state=0;
 				substate=0;
 			}
 			break;
+
+
 		}
 		break;
 	}

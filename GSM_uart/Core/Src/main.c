@@ -120,12 +120,12 @@ int send_mesg_to_server(char *mes,int size)
 	{
 		//char buf[]="{\"latitude\":1727.401123 N, \"longitude\":7822.510254 E, \"time\":12:48:30}";
 		memset(rx,'\0',sizeof(rx));
-		HAL_UART_Transmit_IT(&huart4,(uint8_t*)"AT+CIPSEND=0,7\r",16);
+		HAL_UART_Transmit_IT(&huart4,(uint8_t*)"AT+CIPSEND=0,61\r",16);
 		HAL_UART_Receive(&huart4, rx, 200,3000);
 		printf("Received data %s\n",rx);
 		memset(rx,'\0',sizeof(rx));
-		//HAL_UART_Transmit_IT(&huart4,(uint8_t*)"{\"latitude\":1727.401123 N, \"longitude\":7822.510254 E, \"time\":12:48:30}", strlen("{\"latitude\":1727.401123 N, \"longitude\":7822.510254 E, \"time\":12:48:30}"));
-		HAL_UART_Transmit_IT(&huart4,(uint8_t*)"hiteam", 7);
+		HAL_UART_Transmit_IT(&huart4,(uint8_t*)"latitude:1727.401123 N, longitude:7822.510254 E,time:12:48:30", strlen("latitude:1727.401123 N, longitude:7822.510254 E,time:12:48:30"));
+		//HAL_UART_Transmit_IT(&huart4,(uint8_t*)"hiteam", 7);
 
 		HAL_UART_Receive(&huart4, rx, 200,3000);
 		printf("Received data %s\n",rx);
