@@ -1,6 +1,8 @@
-../Core/Src/GSM_imp.c:12:5:gsm_connect_to_server	16	static
-../Core/Src/GSM_imp.c:265:5:check_server_connection	24	static
-../Core/Src/GSM_imp.c:301:5:gsm_disconnect_to_server	16	static
-../Core/Src/GSM_imp.c:326:5:check_signal	32	static
-../Core/Src/GSM_imp.c:371:5:connect_tcp_server	24	static
-../Core/Src/GSM_imp.c:516:5:check_REG_NETWORK	32	static
+../Core/Src/GSM_imp.c:20:5:gsm_init	16	static
+../Core/Src/GSM_imp.c:322:5:check_server_connection	24	static
+../Core/Src/GSM_imp.c:358:5:gsm_disconnect_to_server	16	static
+../Core/Src/GSM_imp.c:383:5:check_signal	32	static
+../Core/Src/GSM_imp.c:428:5:connect_tcp_server	24	static
+../Core/Src/GSM_imp.c:573:5:check_REG_NETWORK	32	static
+../Core/Src/GSM_imp.c:616:7:send_to_gsm	16	static
+../Core/Src/GSM_imp.c:626:5:send_mesg_to_server	40	static

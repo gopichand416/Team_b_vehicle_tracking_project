@@ -7,16 +7,24 @@
 #include"GSM.h"
 #include"main.h"
 
+extern UART_HandleTypeDef huart4;
 
+
+uint8_t tx[]="AT\r\n";
+uint8_t rx[200];
+uint8_t command[20];
+uint8_t response[20];
+char *data1;
+uint8_t var=0;
 char *str;
-int gsm_connect_to_server()
+int gsm_init()
 {
 	uint8_t state=0;
 	uint8_t substate=0;
 	while(1)
 	{
 	switch(state)
-			  	  {
+	{
 			  	  case 0:
 			  	  {
 			  		  switch(substate)
@@ -212,10 +220,24 @@ int gsm_connect_to_server()
 				  			switch(substate)
 				  			{
 				  			case 0:
-				  				str = send_to_gsm("AT+CGDCONT?\r");
+				  				str = send_to_gsm("AT+COPS?\r");
 				  				//HAL_Delay(1000);
-				  				printf("CGDCONT?\n");
-				  				if((strstr(str,"OK")!=NULL))
+				  				printf("COPS?\n");
+				  				if((strstr(str,"40449")!=NULL))
+				  				{
+				  					printf("state = %d substate = %d \n",state,substate);
+				  					state=7;
+				  					substate=1;
+				  				}
+				  				else
+				  				{
+				  					printf("state = %d substate = %d \n",state,substate);
+				  					//state=6;
+				  					substate=2;
+				  				}
+				  				break;
+				  			case 1:
+				  				if((strstr(str,"405854")!=NULL))
 				  				{
 				  					printf("state = %d substate = %d \n",state,substate);
 				  					state=7;
@@ -224,10 +246,25 @@ int gsm_connect_to_server()
 				  				else
 				  				{
 				  					printf("state = %d substate = %d \n",state,substate);
-				  					state=7;
+				  					//state=6;
+				  					substate=2;
+				  				}
+				  				break;
+				  			case 2:
+				  				if((strstr(str,"ERROR")!=NULL))
+				  				{
+				  					printf("state = %d substate = %d \n",state,substate);
+				  					state=6;
+				  					substate=0;
+				  				}
+				  				else
+				  				{
+				  					printf("state = %d substate = %d \n",state,substate);
+				  					state=6;
 				  					substate=0;
 				  				}
 				  				break;
+
 				  			}
 				  			break;
 				  		}
@@ -238,7 +275,7 @@ int gsm_connect_to_server()
 				  			case 0:
 				  				str =send_to_gsm("AT+CGDCONT=1,\"IP\",\"jionet\"\r");
 				  				//HAL_Delay(1000);
-				  				printf("CGDCONT=1\n");
+				  				printf("CGDCONT=1 jio\n");
 				  				if(!(strncmp(str,"\r\nOK\r\n",6)))
 				  				{
 				  					printf("state = %d substate = %d \n",state,substate);
@@ -251,8 +288,28 @@ int gsm_connect_to_server()
 				  					state=6;
 				  					substate=0;
 				  				}
+				  				break;
+				  			case 1:
+				  				str =send_to_gsm("AT+CGDCONT=1,\"IP\",\"airtelgprs.com\"\r");
+				  				//HAL_Delay(1000);
+				  				printf("CGDCONT=1 airtel\n");
+				  				if(!(strncmp(str,"\r\nOK\r\n",6)))
+				  				{
+				  					printf("state = %d substate = %d \n",state,substate);
+				  					state=8;
+				  					substate=0;
+				  				}
+				  				else
+				  				{
+				  					printf("state = %d substate = %d \n",state,substate);
+				  					state=6;
+				  					substate=0;
+				  				}
+				  				break;
 				  			}
+
 				  			break;
+
 				  		}
 
 
@@ -556,4 +613,39 @@ int check_REG_NETWORK(char *str)
 }
 
 
+char *send_to_gsm(char * command)
+{
+	memset(rx,'\0',sizeof(rx));
+	 printf("tx start\n");
+	 HAL_UART_Transmit_IT(&huart4, (uint8_t *)command,strlen(command));
+	 HAL_UART_Receive(&huart4, rx, 200,1000);
+	 printf("rx data %s\n",(char *)rx);
+	 return (char *)rx;
+}
+
+int send_mesg_to_server(char *mes,int size)
+{
+		char buf[20];
+		memset(buf,'\0',sizeof(buf));
+		sprintf(buf, "AT+CIPSEND=0,%d\r", strlen(mes));
+		memset(rx,'\0',sizeof(rx));
+		HAL_UART_Transmit_IT(&huart4,(uint8_t*)buf,16);
+		HAL_UART_Receive(&huart4, rx, 200,3000);
+		printf("Received data %s\n",rx);
+		memset(rx,'\0',sizeof(rx));
+		HAL_UART_Transmit_IT(&huart4,(uint8_t*)mes,size);
+		HAL_UART_Receive(&huart4, rx, 200,3000);
+		printf("Received data %s\n",rx);
+		if(strstr((char *)rx,"\r\nOK\r\n")!=NULL)
+		{
+			printf("mesg send successfully\n");
+			return HAL_OK;
+		}
+		else
+		{
+			printf("mesg NOT send\n");
+			return 1;
+		}
+	return 1;
+}
 

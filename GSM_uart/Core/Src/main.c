@@ -32,7 +32,11 @@ int _write(int file,char *ptr,int len)
 /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
-
+UART_HandleTypeDef huart4;
+UART_HandleTypeDef huart5;
+UART_HandleTypeDef huart1;
+UART_HandleTypeDef huart2;
+UART_HandleTypeDef huart3;
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 
@@ -49,11 +53,7 @@ int _write(int file,char *ptr,int len)
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-UART_HandleTypeDef huart4;
-UART_HandleTypeDef huart5;
-UART_HandleTypeDef huart1;
-UART_HandleTypeDef huart2;
-UART_HandleTypeDef huart3;
+
 
 /* USER CODE BEGIN PV */
 
@@ -80,14 +80,7 @@ static void MX_USART3_UART_Init(void);
   * @brief  The application entry point.
   * @retval int
   */
-uint8_t tx[]="AT\r\n";
-uint8_t rx[200];
-//uint8_t tx[]="AT\r\n";
-//uint8_t rx[20];
-uint8_t command[20];
-uint8_t response[20];
-char *data1;
-uint8_t var=0;
+/*
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
 
@@ -104,32 +97,17 @@ char *send_to_gsm(char * command)
 
 int send_mesg_to_server(char *mes,int size)
 {
-	/*memset(rx,'\0',sizeof(rx));
-	//char buf[50];
-	//snprintf(buf,strlen("AT+CIPSEND=0,50\r"),"AT+CIPSEND=0,%d\r\n",strlen(mes));
-	//printf("buf = %s\n",buf);
-	//if(check_server_connection()==0)
-	{
-//		HAL_UART_Transmit_IT(&huart4, (uint8_t *)"AT+CIPSEND=0,9\r\n", strlen("AT+CIPSEND=0,9\r\n"));
-		//HAL_UART_Transmit_IT(&huart4, (uint8_t *)buf, strlen(buf));/
-		HAL_UART_Transmit(&huart4, (uint8_t *)"AT+CIPSEND=0,9\r\n", strlen("AT+CIPSEND=0,911222\r\n"),1000);
-		memset(rx,'\0',sizeof(rx)); // aiyaz
-		HAL_Delay(2000);
-		HAL_UART_Transmit_IT(&huart4,(uint8_t *) "hi vishnu",9);
-		HAL_UART_Receive(&huart4, (uint8_t *)rx, 200,1000);*/
-	{
-		//char buf[]="{\"latitude\":1727.401123 N, \"longitude\":7822.510254 E, \"time\":12:48:30}";
+		char buf[20];
+		memset(buf,'\0',sizeof(buf));
+		sprintf(buf, "AT+CIPSEND=0,%d\r", strlen(mes));
 		memset(rx,'\0',sizeof(rx));
-		HAL_UART_Transmit_IT(&huart4,(uint8_t*)"AT+CIPSEND=0,61\r",16);
+		HAL_UART_Transmit_IT(&huart4,(uint8_t*)buf,16);
 		HAL_UART_Receive(&huart4, rx, 200,3000);
 		printf("Received data %s\n",rx);
 		memset(rx,'\0',sizeof(rx));
-		HAL_UART_Transmit_IT(&huart4,(uint8_t*)"latitude:1727.401123 N, longitude:7822.510254 E,time:12:48:30", strlen("latitude:1727.401123 N, longitude:7822.510254 E,time:12:48:30"));
-		//HAL_UART_Transmit_IT(&huart4,(uint8_t*)"hiteam", 7);
-
+		HAL_UART_Transmit_IT(&huart4,(uint8_t*)mes,size);
 		HAL_UART_Receive(&huart4, rx, 200,3000);
 		printf("Received data %s\n",rx);
-
 		if(strstr((char *)rx,"\r\nOK\r\n")!=NULL)
 		{
 			printf("mesg send successfully\n");
@@ -140,9 +118,8 @@ int send_mesg_to_server(char *mes,int size)
 			printf("mesg NOT send\n");
 			return 1;
 		}
-	}
 	return 1;
-}
+}*/
 /*
 int check(char *command, char *response)
 {
@@ -223,7 +200,7 @@ int s1=0;
 	  		  switch(s1)
 	  		  {
 	  		  case 0:
-	  			m =gsm_connect_to_server();
+	  			m =gsm_init();
 	  			if(m==0)
 	  			{
 	  				s1=1;
@@ -256,7 +233,7 @@ int s1=0;
 	  			}
 	  			break;
 	  		  case 3:
-	  			if(send_mesg_to_server("0123456789", 50)==0)
+	  			if(send_mesg_to_server("latitude:1727.401123 N, longitude:7822.510254 E,time:12:48:30",strlen("latitude:1727.401123 N, longitude:7822.510254 E,time:12:48:30"))==0)
 	  			{
 	  				printf("mesg send\n");
 	  				s1=3;
