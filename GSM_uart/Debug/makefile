@@ -60,8 +60,8 @@ all: main-build
 main-build: GSM_uart.elf secondary-outputs
 
 # Tool invocations
-GSM_uart.elf GSM_uart.map: $(OBJS) $(USER_OBJS) E:\stm32cubeide\Vehicle\ tracking\ project\GSM_uart\STM32L476RGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "GSM_uart.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"E:\stm32cubeide\Vehicle tracking project\GSM_uart\STM32L476RGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="GSM_uart.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+GSM_uart.elf GSM_uart.map: $(OBJS) $(USER_OBJS) E:\stm32cubeide\Vehicle\ tracking\ project\Team_b_vehicle_tracking_project\GSM_uart\STM32L476RGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "GSM_uart.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"E:\stm32cubeide\Vehicle tracking project\Team_b_vehicle_tracking_project\GSM_uart\STM32L476RGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="GSM_uart.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

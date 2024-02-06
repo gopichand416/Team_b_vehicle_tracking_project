@@ -97,13 +97,13 @@ int gsm_init()
 			  			  else if(!(strncmp(str,"\r\nERROR\r\n",6)))
 			  			  {
 			  				printf("state = %d substate = %d \n",state,substate);
-			  				state=2;
+			  				state=0;
 			  				substate=0;
 			  			  }
 			  			  else
 			  			  {
 			  				printf("state = %d substate = %d \n",state,substate);
-			  	  			state=2;
+			  	  			state=0;
 			 	  			substate=0;
 			  			  }
 			  			  break;
@@ -136,8 +136,8 @@ int gsm_init()
 			  				  else
 			  				  {
 			  					  printf("state = %d substate = %d \n",state,substate);
-			  					  state=3;
-			  					  substate=4;
+			  					  state=0;
+			  					  substate=0;
 			  				  }
 			  				  break;
 			  			//  case 1:
@@ -166,12 +166,12 @@ int gsm_init()
 				  		 case 1:
 				  			 if(!(strncmp(str,"\r\nERROR\r\n",6)))
 				  			 {
-				  				 state=4;
+				  				 state=0;
 				  				 substate=0;
 				  			 }
 				  			 else
 				  			 {
-				  				 state=4;
+				  				 state=0;
 				  				 substate=0;
 				  			 }
 				  			 break;
@@ -206,7 +206,7 @@ int gsm_init()
 				  			}
 				  			else
 				  			{
-				  				state=5;
+				  				state=0;
 				  				substate=0;
 				  			}
 				  			break;
@@ -233,7 +233,7 @@ int gsm_init()
 				  				{
 				  					printf("state = %d substate = %d \n",state,substate);
 				  					//state=6;
-				  					substate=2;
+				  					substate=1;
 				  				}
 				  				break;
 				  			case 1:
@@ -254,13 +254,13 @@ int gsm_init()
 				  				if((strstr(str,"ERROR")!=NULL))
 				  				{
 				  					printf("state = %d substate = %d \n",state,substate);
-				  					state=6;
+				  					state=0;
 				  					substate=0;
 				  				}
 				  				else
 				  				{
 				  					printf("state = %d substate = %d \n",state,substate);
-				  					state=6;
+				  					state=0;
 				  					substate=0;
 				  				}
 				  				break;
@@ -302,7 +302,7 @@ int gsm_init()
 				  				else
 				  				{
 				  					printf("state = %d substate = %d \n",state,substate);
-				  					state=6;
+				  					state=0;
 				  					substate=0;
 				  				}
 				  				break;
@@ -634,7 +634,7 @@ int send_mesg_to_server(char *mes,int size)
 		printf("Received data %s\n",rx);
 		memset(rx,'\0',sizeof(rx));
 		HAL_UART_Transmit_IT(&huart4,(uint8_t*)mes,size);
-		HAL_UART_Receive(&huart4, rx, 200,3000);
+		HAL_UART_Receive(&huart4, rx, 200,5000);
 		printf("Received data %s\n",rx);
 		if(strstr((char *)rx,"\r\nOK\r\n")!=NULL)
 		{

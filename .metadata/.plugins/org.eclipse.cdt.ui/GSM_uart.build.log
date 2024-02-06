@@ -1,0 +1,10 @@
+12:09:41 **** Incremental Build of configuration Debug for project GSM_uart ****
+make -j4 all 
+arm-none-eabi-size   GSM_uart.elf 
+   text	   data	    bss	    dec	    hex	filename
+  26476	    120	   2456	  29052	   717c	GSM_uart.elf
+Finished building: default.size.stdout
+ 
+
+12:09:41 Build Finished. 0 errors, 0 warnings. (took 333ms)
+

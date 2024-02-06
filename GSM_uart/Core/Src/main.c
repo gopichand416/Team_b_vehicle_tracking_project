@@ -233,7 +233,7 @@ int s1=0;
 	  			}
 	  			break;
 	  		  case 3:
-	  			if(send_mesg_to_server("latitude:1727.401123 N, longitude:7822.510254 E,time:12:48:30",strlen("latitude:1727.401123 N, longitude:7822.510254 E,time:12:48:30"))==0)
+	  			if(send_mesg_to_server("latitude:1727.401123 N, longitude:7822.510254 E,time:12:48:30,date:06012024",strlen("latitude:1727.401123 N, longitude:7822.510254 E,time:12:48:30,date:06012024"))==0)
 	  			{
 	  				printf("mesg send\n");
 	  				s1=3;
