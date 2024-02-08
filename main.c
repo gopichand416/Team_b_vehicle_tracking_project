@@ -140,10 +140,14 @@ int main(void)
         //Write_Data_To_Flash(FLASH_START_ADDRESS, dataToWrite, sizeof(dataToWrite) / sizeof(uint64_t));
 
        // Write_GPS_Data_To_Flash(FLASH_START_ADDRESS, gpsData, 4,20);
-
-       Write_Data_To_Flash(FLASH_START_ADDRESS, dataToWrite, sizeof(dataToWrite) / sizeof(uint64_t));
-
-
+        int i;
+for(i=0;i<80;i++)
+{
+       Write_Data_To_Flash(FLASH_START_ADDRESS+32*i, dataToWrite, sizeof(dataToWrite) / sizeof(uint64_t));
+HAL_Delay(1000);
+   	Read_Data_From_Flash(FLASH_START_ADDRESS+32*i, readData, sizeof(dataToWrite)/sizeof(uint32_t));
+HAL_Delay(1000);
+}
 
         /*********Read data from flash********/
 
