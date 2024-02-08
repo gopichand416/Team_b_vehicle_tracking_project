@@ -18,14 +18,27 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "fatfs.h"
-
+#include "W25Qxx.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "fatfs_sd.h"
+#define W25Q32_ID (uint32_t)0xef4016
+#include "stdlib.h"
 #include "string.h"
+#include "stdio.h"
 /* USER CODE END Includes */
+int _write(int file,char *ptr,int len)
 
+{
+
+  int i=0;
+
+for(i=0;i<len;i++)
+
+  ITM_SendChar((*ptr++));
+
+return len;
+
+}
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 
@@ -40,11 +53,14 @@
 /* USER CODE BEGIN PM */
 
 /* USER CODE END PM */
-
+//UART_HandleTypeDef huart2;
+//UART_HandleTypeDef huart2;
 /* Private variables ---------------------------------------------------------*/
 SPI_HandleTypeDef hspi1;
-
-UART_HandleTypeDef huart2;
+uint32_t ID = 0;
+uint32_t W25QXX_ID;
+uint8_t rxData[13];
+uint8_t txData[10];
 
 /* USER CODE BEGIN PV */
 
@@ -53,56 +69,14 @@ UART_HandleTypeDef huart2;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_USART2_UART_Init(void);
 static void MX_SPI1_Init(void);
+static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-/*DEBUGGING*/
-FATFS fd[2];
-FIL fsrc,fdst;
-//BYTE buffer[4096];
-UINT br,bw;
-/**************************/
-FATFS fs;  // file system
-FIL fil; // File
-FILINFO fno;
-FRESULT fresult;  // result
-UINT br, bw;  // File read/write count
-
-
-FATFS *pfs;
-DWORD fre_clust;
-uint32_t total, free_space;
-
-#define BUFFER_SIZE 128
-char buffer[BUFFER_SIZE];  // to store strings..
-
-int i=0;
-
-
-void send_uart (char *string)
-{
-	uint8_t len = strlen (string);
-	HAL_UART_Transmit(&huart2, (uint8_t *) string, len, 2000);  // transmit in blocking mode
-}
-
-
-int bufsize (char *buf)
-{
-	int i=0;
-	while (*buf++ != '\0') i++;
-	return i;
-}
-
-void bufclear (void)
-{
-	for (int i=0; i<1024; i++)
-		buffer[i] = '\0';
-}
 
 /* USER CODE END 0 */
 
@@ -110,10 +84,78 @@ void bufclear (void)
   * @brief  The application entry point.
   * @retval int
   */
+//Date:070224,Time: 120145,Latitude: 1727.405,Longitude: 7822.510
+uint32_t lastAddress = 0;
+char str[]="Date:070224,Time:120145,Latitude:1727.405,Longitude:7822.510";
+//int len=strlen(str);
+char rxr[256];
+uint32_t address = 0; // Initial address for writing
+
+// Function to write data to the next address after the last one
+/*void writeToNextAddress(uint32_t size, uint8_t *data) {
+    // Calculate the next address
+    uint32_t nextAddress = lastAddress + 1;
+
+    // Write data to the next address
+    W25Q_Write(nextAddress, 0, size, data);
+
+    // Update the last address variable
+    lastAddress = nextAddress;
+}*/
+
+/*void W25Q_Write (uint32_t page, uint16_t offset, uint32_t size, uint8_t *data)
+
+{
+
+	uint16_t startSector  = page/16;
+
+	uint16_t endSector  = (page + ((size+offset-1)/256))/16;
+
+	uint16_t numSectors = endSector-startSector+1;
+
+	uint8_t previousData[4096];
+
+	uint32_t sectorOffset = ((page%16)*256)+offset;
+
+	uint32_t dataindx = 0;
+
+	for (uint16_t i=0; i<numSectors; i++)
+
+	{
+
+		uint32_t startPage = startSector*16;
+
+		W25Q_FastRead(startPage, 0, 4096, previousData);
+
+		uint16_t bytesRemaining = bytestomodify(size, sectorOffset);
+
+		for (uint16_t i=0; i<bytesRemaining; i++)
+
+		{
+
+			previousData[i+sectorOffset] = data[i+dataindx];
+
+		}
+
+		W25Q_Write_Clean(startPage, 0, 4096, previousData);
+
+		startSector++;
+
+		sectorOffset = 0;
+
+		dataindx = dataindx+bytesRemaining;
+
+		size = size-bytesRemaining;
+
+	}
+
+}
+*/
+uint8_t buffer[256];
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+	//ReadOffsetFromMemory()
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -134,136 +176,96 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_USART2_UART_Init();
+ // MX_USART2_UART_Init();
   MX_SPI1_Init();
-  MX_FATFS_Init();
-  /* USER CODE BEGIN 2 */
-//  fresult = f_mount(&fs, "", 1);
-//    	if (fresult != FR_OK) send_uart ("ERROR!!! in mounting SD CARD...\n\n");
-//    	else send_uart("SD CARD mounted successfully...\n\n");
+    /* USER CODE BEGIN 2 */
 
-  /**********debug**********/
-  f_mount(&fd[0],"",0);
-  f_mount(&fd[1],"",1);
+ // W25QXX_NumberOfSector(64);
+   W25Q_Reset();
+   HAL_Delay(1000);
 
-
-      	/*************** Card capacity details ********************/
-
-      	/* Check free space */
-      	f_getfree("", &fre_clust, &pfs);
-
-      	total = (uint32_t)((pfs->n_fatent - 2) * pfs->csize * 0.5);
-      	sprintf (buffer, "SD CARD Total Size: \t%lu\n",total);
-      	send_uart(buffer);
-      	bufclear();
-      	free_space = (uint32_t)(fre_clust * pfs->csize * 0.5);
-      	sprintf (buffer, "SD CARD Free Space: \t%lu\n\n",free_space);
-      	send_uart(buffer);
-
-//      	/************* The following operation is using PUTS and GETS *********************/
-//
-//      	  	/* Open file to write/ create a file if it doesn't exist */
-//      	      fresult = f_open(&fil, "file1.txt", FA_OPEN_ALWAYS | FA_READ | FA_WRITE);
-//
-//      	  	/* Writing text */
-//      	  	fresult=f_puts("This data is from the FILE1.txt. And it was written using ...f_puts... ", &fil);
-//
-//      	  	/* Close file */
-//      	  	fresult = f_close(&fil);
-//
-//      	  send_uart("File1.txt created and the data is written\n");
-//
-//      	  	/* Open file to read */
-//      	  	fresult = f_open(&fil, "file1.txt", FA_READ);
-//
-//      	  	/* Read string from the file */
-//      	  	f_gets(buffer, f_size(&fil), &fil);
-//
-//
-//      	  	send_uart(buffer);
-//
-//
-//      	  	/* Close file */
-//      	  	f_close(&fil);
-//
-//      	  	bufclear();
-//
-//      	  /**************** The following operation is using f_write and f_read **************************/
-//      	  fresult = f_open(&fil, "test.txt", FA_OPEN_EXISTING | FA_READ | FA_WRITE);
-//      	  if(fresult == FR_OK)
-//      		send_uart ("test.txt opened\n");
-//      	    	/* Create second file with read write access and open it */
-//      	    	fresult = f_open(&fil, "file2.txt", FA_OPEN_ALWAYS | FA_READ | FA_WRITE);
-////      	    	if (fresult == FR_OK)
-////      	    		send_uart ("File2.txt created\n");
-////      	    	else if(fresult == FR_DISK_ERR)
-////      	    		send_uart("Disk error\n");
-//      	    	/* Writing text */
-//      	    	strcpy (buffer, "This is File2.txt, written using ...f_write... and it says Hello from Controllerstech\n");
-//
-//      	    	fresult = f_write(&fil, buffer, bufsize(buffer), &bw);
-//
-//      	    	send_uart ("File2.txt created and data is written\n");
-//
-//      	    	/* Close file */
-//      	    	f_close(&fil);
-//
-//
-//
-//      	    	// clearing buffer to show that result obtained is from the file
-//      	    	bufclear();
-//
-//      	    	/* Open second file to read */
-//      	    	fresult = f_open(&fil, "file2.txt", FA_READ);
-//
-//      	    	if (fresult == FR_OK)send_uart ("file2.txt is open and the data is shown below\n");
-//
-//      	    	/* Read data from the file
-//      	    	 * Please see the function details for the arguments */
-//      	    	f_read (&fil, buffer, f_size(&fil), &br);
-//      	    	send_uart(buffer);
-//      	    	send_uart("\n\n");
-//
-//      	    	/* Close file */
-//      	    	f_close(&fil);
-//
-//      	    	bufclear();
-
-
-      	fresult = f_open(&fil, "test.txt", FA_OPEN_EXISTING | FA_READ);
-      	if(fresult==FR_WRITE_PROTECTED)
-      		send_uart("FR_WRITE_PROTECTED\n");
-      	else if(fresult==FR_INVALID_DRIVE)
-      		send_uart("FR_INVALID_DRIVE\n");
-      	else if(fresult==FR_NOT_ENABLED)
-      		send_uart("OK2\n");
-      	else if(fresult==FR_NO_FILESYSTEM)
-      		send_uart("FR_NOT_READY\n");
-      	else if(fresult==FR_TIMEOUT)
-      		send_uart("FR_NO_FILE\n");
-      			else if(fresult==FR_LOCKED)
-      					send_uart("FR_NO_PATH\n");
-      					else if(fresult==FR_NOT_ENOUGH_CORE)
-      							send_uart("FR_INVALID_NAME\n");
-      							else if(fresult==FR_TOO_MANY_OPEN_FILES)
-      									send_uart("FR_DENIED\n");
-
-      									else
-      										send_uart("nothing\n");
-
-
-
-      		//die(fresult);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
+ // while (1)
+ // {
     /* USER CODE END WHILE */
+	  ID = W25Q_ReadID();
+	  HAL_Delay(200);
+	  /*
+    uint32_t numWrites = 4; // Change this value as needed
+
+    // Calculate the size of your string
+    uint32_t strSize = sizeof(str);
+
+    // Calculate the number of strings that can fit in a page
+    uint32_t stringsPerPage = 256 / strSize;
+
+    // Loop to write the string multiple times
+    for (uint32_t i = 0; i < numWrites; ++i) {
+        // Calculate the page and offset for this write operation
+        uint32_t page = i / stringsPerPage;
+        uint16_t offset = (i % stringsPerPage) * strSize;
+
+        // Write the string to flash memory
+        W25Q_Write(page, offset, strSize, (uint8_t*)str);
+
+    }
+    W25Q_FastRead(0, 0, 4*strlen(str), rxr);
+    printf("recieved data:%s",rxr);
+*/
+
+	  // Calculate the number of pages needed to store the string
+	      uint32_t numPagesNeeded = (sizeof(str) / 256) + 1; // Add 1 to account for partial page writes
+
+	      // Calculate the number of sectors needed to store the string
+	      uint32_t numSectorsNeeded = (numPagesNeeded / 16) + 1; // Add 1 to account for partial sector writes
+
+	      // Calculate the number of blocks needed to store the string
+	      uint32_t numBlocksNeeded = (numSectorsNeeded / 16) + 1; // Add 1 to account for partial block writes
+
+	      // Loop to write the string multiple times
+	      for (uint32_t block = 0; block < numBlocksNeeded; ++block) {
+	          for (uint32_t sector = 0; sector < numSectorsNeeded; ++sector) {
+	              for (uint32_t page = 0; page < numPagesNeeded; ++page) {
+	                  // Calculate the address for this write operation
+	                  uint32_t address = (block * 64 * 1024) + (sector * 4 * 1024) + (page * 256);
+
+	                  // Write the string to flash memory
+	                  W25Q_Write(address, 0, sizeof(str), (uint8_t*)str);
+	              }
+	          }
+	      }
+
+	      // Assuming page size is 256 bytes
+
+	         // Calculate the number of pages needed to read the data
+	         uint32_t numPagesToRead = (sizeof(buffer) / 256); // Assuming page size is 256 bytes
+
+	         // Loop to read the data page-wise
+	         for (uint32_t page = 0; page < numPagesToRead; ++page) {
+	             // Calculate the address for this read operation
+	             uint32_t addr = page * 256; // Assuming page size is 256 bytes
+
+	             // Read data from flash memory
+	             W25Q_Read(addr, 0, sizeof(buffer), buffer);
+
+	             // Process the read data as needed
+	             // For example, you can print the read data
+	             printf("Data from page %lu:\r\n", page);
+	             for (int i = 0; i < sizeof(buffer); ++i) {
+	                 printf("%02X ", buffer[i]);
+	                 if ((i + 1) % 16 == 0) {
+	                     printf("\r\n");
+	                 }
+	             }
+	             printf("\r\n");
+	         }
+
 
     /* USER CODE BEGIN 3 */
-  }
+
   /* USER CODE END 3 */
 }
 
@@ -339,7 +341,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -357,41 +359,6 @@ static void MX_SPI1_Init(void)
 }
 
 /**
-  * @brief USART2 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_USART2_UART_Init(void)
-{
-
-  /* USER CODE BEGIN USART2_Init 0 */
-
-  /* USER CODE END USART2_Init 0 */
-
-  /* USER CODE BEGIN USART2_Init 1 */
-
-  /* USER CODE END USART2_Init 1 */
-  huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
-  huart2.Init.WordLength = UART_WORDLENGTH_8B;
-  huart2.Init.StopBits = UART_STOPBITS_1;
-  huart2.Init.Parity = UART_PARITY_NONE;
-  huart2.Init.Mode = UART_MODE_TX_RX;
-  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-  huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-  if (HAL_UART_Init(&huart2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN USART2_Init 2 */
-
-  /* USER CODE END USART2_Init 2 */
-
-}
-
-/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -403,15 +370,13 @@ static void MX_GPIO_Init(void)
 /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, SPI_CS_Pin|GPIO_PIN_5, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : SPI_CS_Pin PA5 */
-  GPIO_InitStruct.Pin = SPI_CS_Pin|GPIO_PIN_5;
+  /*Configure GPIO pin : PA4 */
+  GPIO_InitStruct.Pin = GPIO_PIN_4;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
