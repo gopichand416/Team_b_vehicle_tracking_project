@@ -18,27 +18,14 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "W25Qxx.h"
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#define W25Q32_ID (uint32_t)0xef4016
-#include "stdlib.h"
-#include "string.h"
-#include "stdio.h"
+#define FLASH_START_ADDRESS 0x08080000
+
+char dataToWrite[] = "hello world hello memory 25874";
 /* USER CODE END Includes */
-int _write(int file,char *ptr,int len)
 
-{
-
-  int i=0;
-
-for(i=0;i<len;i++)
-
-  ITM_SendChar((*ptr++));
-
-return len;
-
-}
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 
@@ -53,14 +40,8 @@ return len;
 /* USER CODE BEGIN PM */
 
 /* USER CODE END PM */
-//UART_HandleTypeDef huart2;
-//UART_HandleTypeDef huart2;
+
 /* Private variables ---------------------------------------------------------*/
-SPI_HandleTypeDef hspi1;
-uint32_t ID = 0;
-uint32_t W25QXX_ID;
-uint8_t rxData[13];
-uint8_t txData[10];
 
 /* USER CODE BEGIN PV */
 
@@ -69,14 +50,48 @@ uint8_t txData[10];
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_SPI1_Init(void);
-static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void Write_Data_To_Flash(uint64_t address, uint64_t* data, uint64_t dataSize) {
+    HAL_FLASH_Unlock();
+
+    for (uint32_t i = 0; i < dataSize; i++) {
+//        HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, address, data[i]);
+    	 FLASH_ByteProgram(FLASH_START_ADDRESS,dataToWrite );
+        address += 8;
+    }
+
+    HAL_FLASH_Lock();
+}
+
+void Read_Data_From_Flash(uint64_t address, uint64_t* buffer, uint64_t dataSize) {
+    for (uint32_t i = 0; i < dataSize; i++) {
+        buffer[i] = *(uint64_t*)address;
+        address += 8;
+    }
+}
+void Erase_Flash_Page(uint64_t pageAddress) {
+    FLASH_EraseInitTypeDef eraseConfig;
+    uint32_t pageError;
+
+    eraseConfig.TypeErase   = FLASH_TYPEERASE_PAGES;
+    eraseConfig.Page        = pageAddress / FLASH_PAGE_SIZE; // Specify the page number, not the address
+    eraseConfig.Banks       = FLASH_BANK_2; // Specify the bank
+    eraseConfig.NbPages     = 1; // Number of pages to erase
+
+    HAL_FLASH_Unlock();
+
+    HAL_FLASHEx_Erase(&eraseConfig, &pageError);
+
+    HAL_FLASH_Lock();
+}
+
+#include "stm32l4xx_hal.h"
+
 
 /* USER CODE END 0 */
 
@@ -84,78 +99,10 @@ static void MX_USART2_UART_Init(void);
   * @brief  The application entry point.
   * @retval int
   */
-//Date:070224,Time: 120145,Latitude: 1727.405,Longitude: 7822.510
-uint32_t lastAddress = 0;
-char str[]="Date:070224,Time:120145,Latitude:1727.405,Longitude:7822.510";
-//int len=strlen(str);
-char rxr[256];
-uint32_t address = 0; // Initial address for writing
-
-// Function to write data to the next address after the last one
-/*void writeToNextAddress(uint32_t size, uint8_t *data) {
-    // Calculate the next address
-    uint32_t nextAddress = lastAddress + 1;
-
-    // Write data to the next address
-    W25Q_Write(nextAddress, 0, size, data);
-
-    // Update the last address variable
-    lastAddress = nextAddress;
-}*/
-
-/*void W25Q_Write (uint32_t page, uint16_t offset, uint32_t size, uint8_t *data)
-
-{
-
-	uint16_t startSector  = page/16;
-
-	uint16_t endSector  = (page + ((size+offset-1)/256))/16;
-
-	uint16_t numSectors = endSector-startSector+1;
-
-	uint8_t previousData[4096];
-
-	uint32_t sectorOffset = ((page%16)*256)+offset;
-
-	uint32_t dataindx = 0;
-
-	for (uint16_t i=0; i<numSectors; i++)
-
-	{
-
-		uint32_t startPage = startSector*16;
-
-		W25Q_FastRead(startPage, 0, 4096, previousData);
-
-		uint16_t bytesRemaining = bytestomodify(size, sectorOffset);
-
-		for (uint16_t i=0; i<bytesRemaining; i++)
-
-		{
-
-			previousData[i+sectorOffset] = data[i+dataindx];
-
-		}
-
-		W25Q_Write_Clean(startPage, 0, 4096, previousData);
-
-		startSector++;
-
-		sectorOffset = 0;
-
-		dataindx = dataindx+bytesRemaining;
-
-		size = size-bytesRemaining;
-
-	}
-
-}
-*/
-uint8_t buffer[256];
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	//ReadOffsetFromMemory()
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -176,96 +123,44 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
- // MX_USART2_UART_Init();
-  MX_SPI1_Init();
-    /* USER CODE BEGIN 2 */
+  /* USER CODE BEGIN 2 */
+ // float dataToWrite[] = {1234.5678,2019.2019,111111,222222};
+  uint64_t readData[3];
+//  uint64_t dataToWrite[] = {0x123,0x2019,0x111111,0x222222};
+  //char gpsData[4][20] = {"02.02.24","10:59:00","8080.3456","9090.1234"};
+ //char dataToWrite[] = "hello world hello memory 25874";
 
- // W25QXX_NumberOfSector(64);
-   W25Q_Reset();
-   HAL_Delay(1000);
+
+  /*******Erasing the page************/
+
+        Erase_Flash_Page(FLASH_START_ADDRESS);
+
+        /********Write data to flash*******/
+
+        //Write_Data_To_Flash(FLASH_START_ADDRESS, dataToWrite, sizeof(dataToWrite) / sizeof(uint64_t));
+
+       // Write_GPS_Data_To_Flash(FLASH_START_ADDRESS, gpsData, 4,20);
+
+       Write_Data_To_Flash(FLASH_START_ADDRESS, dataToWrite, sizeof(dataToWrite) / sizeof(uint64_t));
+
+
+
+        /*********Read data from flash********/
+
+       // Read_Data_From_Flash(FLASH_START_ADDRESS, readData, sizeof(dataToWrite) / sizeof(uint32_t));
+
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
- // while (1)
- // {
+  while (1)
+  {
     /* USER CODE END WHILE */
-	  ID = W25Q_ReadID();
-	  HAL_Delay(200);
-	  /*
-    uint32_t numWrites = 4; // Change this value as needed
-
-    // Calculate the size of your string
-    uint32_t strSize = sizeof(str);
-
-    // Calculate the number of strings that can fit in a page
-    uint32_t stringsPerPage = 256 / strSize;
-
-    // Loop to write the string multiple times
-    for (uint32_t i = 0; i < numWrites; ++i) {
-        // Calculate the page and offset for this write operation
-        uint32_t page = i / stringsPerPage;
-        uint16_t offset = (i % stringsPerPage) * strSize;
-
-        // Write the string to flash memory
-        W25Q_Write(page, offset, strSize, (uint8_t*)str);
-
-    }
-    W25Q_FastRead(0, 0, 4*strlen(str), rxr);
-    printf("recieved data:%s",rxr);
-*/
-
-	  // Calculate the number of pages needed to store the string
-	      uint32_t numPagesNeeded = (sizeof(str) / 256) + 1; // Add 1 to account for partial page writes
-
-	      // Calculate the number of sectors needed to store the string
-	      uint32_t numSectorsNeeded = (numPagesNeeded / 16) + 1; // Add 1 to account for partial sector writes
-
-	      // Calculate the number of blocks needed to store the string
-	      uint32_t numBlocksNeeded = (numSectorsNeeded / 16) + 1; // Add 1 to account for partial block writes
-
-	      // Loop to write the string multiple times
-	      for (uint32_t block = 0; block < numBlocksNeeded; ++block) {
-	          for (uint32_t sector = 0; sector < numSectorsNeeded; ++sector) {
-	              for (uint32_t page = 0; page < numPagesNeeded; ++page) {
-	                  // Calculate the address for this write operation
-	                  uint32_t address = (block * 64 * 1024) + (sector * 4 * 1024) + (page * 256);
-
-	                  // Write the string to flash memory
-	                  W25Q_Write(address, 0, sizeof(str), (uint8_t*)str);
-	              }
-	          }
-	      }
-
-	      // Assuming page size is 256 bytes
-
-	         // Calculate the number of pages needed to read the data
-	         uint32_t numPagesToRead = (sizeof(buffer) / 256); // Assuming page size is 256 bytes
-
-	         // Loop to read the data page-wise
-	         for (uint32_t page = 0; page < numPagesToRead; ++page) {
-	             // Calculate the address for this read operation
-	             uint32_t addr = page * 256; // Assuming page size is 256 bytes
-
-	             // Read data from flash memory
-	             W25Q_Read(addr, 0, sizeof(buffer), buffer);
-
-	             // Process the read data as needed
-	             // For example, you can print the read data
-	             printf("Data from page %lu:\r\n", page);
-	             for (int i = 0; i < sizeof(buffer); ++i) {
-	                 printf("%02X ", buffer[i]);
-	                 if ((i + 1) % 16 == 0) {
-	                     printf("\r\n");
-	                 }
-	             }
-	             printf("\r\n");
-	         }
-
+	Read_Data_From_Flash(FLASH_START_ADDRESS, readData, sizeof(dataToWrite)/sizeof(uint32_t));
 
     /* USER CODE BEGIN 3 */
-
+  }
   /* USER CODE END 3 */
 }
 
@@ -288,13 +183,14 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_MSI;
+  RCC_OscInitStruct.MSIState = RCC_MSI_ON;
+  RCC_OscInitStruct.MSICalibrationValue = 0;
+  RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_6;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_MSI;
   RCC_OscInitStruct.PLL.PLLM = 1;
-  RCC_OscInitStruct.PLL.PLLN = 10;
+  RCC_OscInitStruct.PLL.PLLN = 40;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV7;
   RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
   RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
@@ -319,74 +215,59 @@ void SystemClock_Config(void)
 }
 
 /**
-  * @brief SPI1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_SPI1_Init(void)
-{
-
-  /* USER CODE BEGIN SPI1_Init 0 */
-
-  /* USER CODE END SPI1_Init 0 */
-
-  /* USER CODE BEGIN SPI1_Init 1 */
-
-  /* USER CODE END SPI1_Init 1 */
-  /* SPI1 parameter configuration*/
-  hspi1.Instance = SPI1;
-  hspi1.Init.Mode = SPI_MODE_MASTER;
-  hspi1.Init.Direction = SPI_DIRECTION_2LINES;
-  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
-  hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
-  hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
-  hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
-  hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
-  hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
-  hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-  hspi1.Init.CRCPolynomial = 7;
-  hspi1.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
-  hspi1.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
-  if (HAL_SPI_Init(&hspi1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN SPI1_Init 2 */
-
-  /* USER CODE END SPI1_Init 2 */
-
-}
-
-/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
   */
 static void MX_GPIO_Init(void)
 {
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
 /* USER CODE BEGIN MX_GPIO_Init_1 */
 /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin : PA4 */
-  GPIO_InitStruct.Pin = GPIO_PIN_4;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
+
+// Function to convert a string to a 64-bit integer
+//uint64_t stringToUint64(char* str) {
+//    uint64_t result = 0;
+//    size_t length = strlen(str);
+//
+//    // Ensure that the length does not exceed 8 bytes
+//    if (length > 8) {
+//        length = 8;
+//    }
+//
+//    // Convert each character to a byte and pack them into a uint64_t
+//    for (size_t i = 0; i < length; i++) {
+//        result |= ((uint64_t)str[i]) << (8 * i);
+//    }
+//
+//    return result;
+//}
+//void Write_GPS_Data_To_Flash(uint64_t address, char gpsData[][20], int rows, int cols) {
+//    HAL_FLASH_Unlock();
+//
+//    for (int i = 0; i < rows; i++) {
+//        for (int j = 0; j < cols; j++) {
+//            uint64_t data = stringToUint64(gpsData[i][j]);
+//            HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, address, data);
+//            address += 8;
+//        }
+//    }
+//
+//    HAL_FLASH_Lock();
+//}
+
+
+
+
+
 
 /* USER CODE END 4 */
 
