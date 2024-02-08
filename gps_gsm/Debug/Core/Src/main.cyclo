@@ -1,0 +1,13 @@
+core_cm4.h:2059:26:ITM_SendChar	4
+main.c:29:5:_write	2
+main.c:103:5:get_gsm_init	3
+main.c:121:6:gsm_actual_server	3
+main.c:138:5:main	6
+main.c:241:6:SystemClock_Config	4
+main.c:291:13:MX_UART4_Init	2
+main.c:326:13:MX_UART5_Init	2
+main.c:361:13:MX_USART1_UART_Init	2
+main.c:396:13:MX_USART2_UART_Init	2
+main.c:431:13:MX_USART3_UART_Init	2
+main.c:466:13:MX_GPIO_Init	1
+main.c:488:6:Error_Handler	1

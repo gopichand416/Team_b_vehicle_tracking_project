@@ -1,0 +1,8 @@
+GSM_imp.c:20:5:gsm_init	43
+GSM_imp.c:324:5:check_server_connection	6
+GSM_imp.c:360:5:gsm_disconnect_to_server	3
+GSM_imp.c:385:5:check_signal	15
+GSM_imp.c:430:5:connect_tcp_server	21
+GSM_imp.c:575:5:check_REG_NETWORK	12
+GSM_imp.c:618:7:send_to_gsm	1
+GSM_imp.c:628:5:send_mesg_to_server	2
