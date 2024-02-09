@@ -165,7 +165,7 @@ void gps_data_extraction(gpsdata* data)
 			//sprintf(json_str,"{\"latitude\":%f %c,\n \"longitude\":%f %c,\n \"time\":%s,\nData = %s\n }",data->latitude,data->N_OR_S, data->longitude,data->E_OR_W,data->time,data->Date);
 
 //		sprintf(json_str,"latitude:%f %c,longitude:%f %c,time:%d:%d:%d,Date = %s\n",data->latitude,data->N_OR_S, data->longitude,data->E_OR_W,ist_hr,ist_min,sec,data->Date);
-		sprintf(json_str,"\n{\n\"latitude\":%f %c,\n \"longitude\":%f %c,\n \"time\": %d:%d:%d \n \"Date\" = %s\n }",data->latitude,data->N_OR_S, data->longitude,data->E_OR_W,ist_hr,ist_min,sec,data->Date);
+		sprintf(json_str,"\n{\n\"lat\":%f %c,\n \"lon\":%f %c,\n \"time\": %d:%d:%d \n \"Date\" = %s\n }",data->latitude,data->N_OR_S, data->longitude,data->E_OR_W,ist_hr,ist_min,sec,data->Date);
 //	     sprintf(json_str,"{\"latitude\":%f %c,\n \"longitude\":%f %c,\n \"time\":\"%lf \" \nData = %s\n }",data->latitude,data->N_OR_S, data->longitude,data->E_OR_W,data->time,data->Date);
 	     printf("json format is %s\n",json_str);
 

@@ -86,7 +86,6 @@ static void MX_USART3_UART_Init(void);
   * @retval int
   */
 
-char mystr[100] = "HelloB";
 int length = 0;
 int gsm_status = 1;
 int gps_status = 1;
@@ -95,6 +94,10 @@ int gps_output_flag = 1;
 
 char json_str[100];
 char read_json[1000];
+int i=0;
+int j=0;
+int offset = 88;
+int flash_count = 10;
 uint8_t flag = 0;
 gpsdata gps;
 
@@ -113,10 +116,7 @@ int get_gsm_init()
 	{
 		return 1;
 	}
-
-
 }
-
 
 void gsm_actual_server()
   {
@@ -134,7 +134,8 @@ void gsm_actual_server()
             gsm_status = 1;
         }
     }
-  }
+}
+
 int main(void)
 {
   HAL_Init();
@@ -150,16 +151,14 @@ int main(void)
 
   eraseFlashPage(FLASH_START_ADDRESS);
 
-
   int inactive_count = 0;
 
           gsm_actual_server();
 
         while (1)
         {
-        	memset(json_str,'\0',100);
-        	length = 0;
-            // memset gps data and json string
+//        	memset(json_str,'\0',100);
+//        	length = 0;
             get_gps_data();
             printf("json data %s\n",json_str);
             length = strlen(json_str);
@@ -178,12 +177,7 @@ int main(void)
                     {
                     	gsm_status = 0;
                         inactive_count = 0;
-                        /*if(inactive_count>0)
-                         * {
-                         * 		send fom flash to server
-                         * 		inactive_count = 0;
-                         * 	}
-                         */
+                        // ?
                     }
                 }
 
@@ -192,42 +186,46 @@ int main(void)
                 		 gsm_status = 1;
                 }
 
-                if(gsm_status==1)
+                if((gsm_status==1))
                 {
-                	eraseFlashPage(FLASH_START_ADDRESS);
-                	HAL_Delay(1000);
-                    writeStringToFlash(FLASH_START_ADDRESS,json_str);
+                    writeStringToFlash(FLASH_START_ADDRESS+offset*i,json_str);
                     inactive_count++;
+                    i++;
                     HAL_Delay(500);
-                    readDataFromFlash(FLASH_START_ADDRESS, read_json, strlen(json_str)+1);
-                    printf("From Flash\n");
-                    printf("%s",read_json);
-                    printf("end from flash\n");
+
                 }
 
-                if(inactive_count>10)
+                if(inactive_count>flash_count)
                 {
-                	/*if(inactive_count>0)
-                	 * {
-                	 * 		send fom flash to server
-                	 * 		inactive_count = 0;
-                	 * 	}
-                	 */
                     gsm_actual_server();
-                    // handle sending data from flash to server
+                    if(gsm_status == 0)
+                    {
+                    	while(j<=i)
+                    	{
+                    		readDataFromFlash(FLASH_START_ADDRESS+offset*j, read_json, strlen(json_str)+1);
+                    		mesg_status = send_mesg_to_server(read_json,strlen(read_json)+1);
+                    		j++;
+                    		printf("sent to server\n");
+                    		printf("%d %d",i,j);
+                    	}
+                    j=0,i=0;
                     inactive_count = 0;
+                    eraseFlashPage(FLASH_START_ADDRESS);
+                    }
+                    else
+                    {
+                    	flash_count = flash_count+10;;
+                    }
                 }
             }
 
             else
             {
                 printf("gps issue\n");
-
                 gps_status = 1;
             }
 
-
-            HAL_Delay(3000);
+            HAL_Delay(1000);
         }
 }
 
