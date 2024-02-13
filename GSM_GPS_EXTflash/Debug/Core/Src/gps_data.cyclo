@@ -1,0 +1,4 @@
+../Core/Src/gps_data.c:34:6:gps_callback	2
+../Core/Src/gps_data.c:42:5:get_gps_data	2
+../Core/Src/gps_data.c:71:5:gpsData	11
+../Core/Src/gps_data.c:136:6:gps_data_extraction	7
