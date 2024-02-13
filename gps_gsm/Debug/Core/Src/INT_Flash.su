@@ -1,3 +1,0 @@
-../Core/Src/INT_Flash.c:5:6:writeStringToFlash	40	static
-../Core/Src/INT_Flash.c:28:6:readDataFromFlash	80	static
-../Core/Src/INT_Flash.c:50:6:eraseFlashPage	40	static
