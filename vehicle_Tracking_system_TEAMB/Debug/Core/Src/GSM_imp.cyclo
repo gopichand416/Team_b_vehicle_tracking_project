@@ -1,0 +1,12 @@
+../Core/Src/GSM_imp.c:20:5:gsm_init	43
+../Core/Src/GSM_imp.c:324:5:my_check_server	3
+../Core/Src/GSM_imp.c:349:5:check_server_connection	6
+../Core/Src/GSM_imp.c:385:5:gsm_disconnect_to_server	3
+../Core/Src/GSM_imp.c:410:5:check_signal	15
+../Core/Src/GSM_imp.c:455:5:connect_tcp_server	21
+../Core/Src/GSM_imp.c:600:5:check_REG_NETWORK	12
+../Core/Src/GSM_imp.c:644:5:check_signal_quality	3
+../Core/Src/GSM_imp.c:668:5:get_gsm_init	3
+../Core/Src/GSM_imp.c:683:6:gsm_actual_server	3
+../Core/Src/GSM_imp.c:701:7:send_to_gsm	1
+../Core/Src/GSM_imp.c:711:5:send_mesg_to_server	2

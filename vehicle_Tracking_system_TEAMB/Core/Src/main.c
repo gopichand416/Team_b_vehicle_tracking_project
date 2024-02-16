@@ -25,6 +25,7 @@
 #include "stm32l4xx_hal.h"
 #define FLASH_START_ADDRESS 0x08080000
 #define START_ADDRESS 0x00000000
+
 int _write(int file,char *ptr,int len)
 {
     int i=0;
@@ -85,7 +86,7 @@ static void MX_USART3_UART_Init(void);
   * @brief  The application entry point.
   * @retval int
   */
-char rx_buffer[500];
+char rx_buffer[50];
 uint32_t ID = 0;
 uint64_t current_offset;
 uint64_t offset_INT_Flash;
@@ -99,47 +100,43 @@ int gps_output_flag = 1;
 
 char json_str[100];
 char read_json[1000];
-int i=0;
-int j=0;
-int offset = 88;
+uint8_t i=0;
+uint8_t j=0;
+int offset = 50;
 int flash_count = 10;
+int inactive_count = 0;
 uint8_t flag = 0;
+uint8_t read_offset = 0;
+uint8_t write_offset = 0;
+uint8_t write_size = 50;
 gpsdata gps;
+extern char *str;
 
-
-
-int get_gsm_init()
+void Read_Flash()
 {
-	if(gsm_init()==0)
+	while(j<i)
 	{
-		if(connect_tcp_server()==0)
-				return 0;
-			else
-				return 1;
+		printf("read from flash\n");
+		memset(rx_buffer,'\0',sizeof(rx_buffer));
+		W25Q_Read(START_ADDRESS+j,read_offset,sizeof(rx_buffer), (uint8_t*)rx_buffer);
+
+		printf("read from flash data is %s\n",rx_buffer);
+		mesg_status = send_mesg_to_server(rx_buffer,strlen(rx_buffer)+1);
+		if(mesg_status == 1)
+			break;
+		j++;
+
+		printf("%d %d\n",i,j);
 	}
-	else
+	if(mesg_status == 0)
 	{
-		return 1;
+		j=0,i=0;
+		inactive_count = 0;
+		flash_count = 5;
+		gsm_status = 1;
 	}
 }
 
-void gsm_actual_server()
-  {
-      int count = 1;
-     while(count<2)
-     {
-     if(get_gsm_init() == 0)
-     {
-            gsm_status = 0;
-            break;
-        }
-        else
-        {
-            count++;
-            gsm_status = 1;
-        }
-    }
-}
 
 int main(void)
 {
@@ -173,97 +170,79 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
-//  eraseFlashPage(FLASH_START_ADDRESS);
+
   W25Q_Reset();
   HAL_Delay(500);
 
   ID = W25Q_ReadID();
-//  HAL_Delay(200);
 
-  /*********Initially read address from internal flash**********/
-//  offset_INT_Flash = readValueFromFlash();
-  /* Erasing sector 0*/
-  W25Q_Erase_Sector (0);
-
-    int inactive_count = 0;
-
-            gsm_actual_server();
+  gsm_actual_server();
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-//        	memset(json_str,'\0',100);
-//        	length = 0;
       get_gps_data();
 
-//      strcpy(json_str,"lat:1727.401123 N, lon:7822.510254 E, time:12:48:30");
-//      gps_status = 0;
       printf("json data %s\n",json_str);
       length = strlen(json_str);
       printf("length of json string %d data %s\n",length,json_str);
       printf("gps_status %d\n",gps_status);
+
       if(gps_status==0)
       {
-          if(check_server_connection()==0)
-          {
-              mesg_status = send_mesg_to_server(json_str,length);
-              if(mesg_status == 1)
-              {
-                      gsm_status = 1;
-              }
-              else
-              {
-              	gsm_status = 0;
-                  inactive_count = 0;
-                  // ?
-              }
-          }
+    	  if(check_signal_quality()==0)
+    	  {
+    		  if(my_check_server()==0)
+    		  {
+    			  if(inactive_count!=0)
+    			   {
+    			   	Read_Flash();
+    			   	printf("************Flash sending Done*************\n");
 
-          else
-          {
-          		 gsm_status = 1;
-          }
+					if( (j>0) && (j%87 == 0))
+					{
+						W25Q_Erase_Sector((j/87)-1);
+
+					}
+    			   }
+    			   	mesg_status = send_mesg_to_server(json_str,length);
+    			   	gsm_status = 0;
+    			   	if(mesg_status == 1)
+    			   	{
+    			   		gsm_status = 1;
+    			   	}
+    		  }
+    		  else
+    		  {
+    			  gsm_status = 1;
+    		  }
+    	    }
+    	  else
+    	  {
+    		  gsm_status = 1;
+    	  }
 
           if((gsm_status==1))
           {
           	printf("write to flash\n");
-          	 current_offset = (length*i);//+offset_INT_Flash;
+          	 current_offset = (length*i);
 
-//          		  W25Q_Write(START_ADDRESS,current_offset,86,(uint8_t*)json_str);
-     		  W25Q_Write(START_ADDRESS+i,0,86,(uint8_t*)json_str);
+     		  W25Q_Write(START_ADDRESS+i,write_offset,write_size,(uint8_t*)json_str);
+     		 printf("json string %d data %s\n",length,json_str);
 
-          		  HAL_Delay(500);
-//          		 printf("read from flash\n");
-//          		      W25Q_Read(START_ADDRESS,current_offset , 88, (uint8_t*)rx_buffer);
-//          		      printf("read from flash data is %s\n",rx_buffer);
-//              writeStringToFlash(FLASH_START_ADDRESS+offset*i,json_str);
               inactive_count++;
               i++;
-//              HAL_Delay(500);
           }
 
           if(inactive_count>=flash_count)
           {
-              //gsm_actual_server();
-          	gsm_status=connect_tcp_server();
-          	gsm_status = 0;
+          	gsm_status=get_gsm_init();
+
               if(gsm_status == 0)
               {
-              	while(j<=i)
-              	{
-              		printf("read from flash\n");
-              		          		      W25Q_Read(START_ADDRESS+j,0,86, (uint8_t*)rx_buffer);
-              		          		      printf("read from flash data is %s\n",rx_buffer);
-//              		readDataFromFlash(FLASH_START_ADDRESS+offset*j, read_json, strlen(json_str)+1);
-              		mesg_status = send_mesg_to_server(rx_buffer,strlen(rx_buffer)+1);
-              		j++;
-              		printf("sent to server\n");
-              		printf("%d %d",i,j);
-              	}
-              j=0,i=0;
-              inactive_count = 0;
-//              eraseFlashPage(FLASH_START_ADDRESS);
+                printf("*******************************CONNECTED**********************************\n");
+              	Read_Flash();
               }
               else
               {
@@ -277,11 +256,8 @@ int main(void)
           printf("gps issue\n");
           gps_status = 1;
       }
-//      printf("read from flash\n");
-//      W25Q_Read(START_ADDRESS, 0, 88, (uint8_t*)rx_buffer);
-//      printf("read from flash data is %s\n",rx_buffer);
 
-      HAL_Delay(3000);
+      HAL_Delay(500);
   }
 }
 

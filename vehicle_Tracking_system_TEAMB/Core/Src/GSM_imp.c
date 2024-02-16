@@ -8,7 +8,7 @@
 #include"main.h"
 
 extern UART_HandleTypeDef huart4;
-
+extern int gsm_status;
 
 uint8_t tx[]="AT\r\n";
 uint8_t rx[200];
@@ -21,7 +21,7 @@ int gsm_init()
 {
 	uint8_t state=0;
 	uint8_t substate=0;
-	int count=20;
+	int count=30;
 	while(count--)
 	{
 	switch(state)
@@ -32,7 +32,6 @@ int gsm_init()
 			  		  {
 			  		  case 0:
 			  			 str =send_to_gsm("ATE0\r");
-			  			//HAL_Delay(1000);
 			  			 printf("ATE0 \n");
 			  			//if(strncmp(str,"\r\nOK\r\n",6))
 			  			 if((strstr(str,"\r\nOK\r\n")!=NULL))
@@ -62,7 +61,6 @@ int gsm_init()
 			  		  case 0:
 			  			  str =send_to_gsm("AT+CMEE=2\r");
 			  			  printf("CMEE=2 \n");
-			  			  HAL_Delay(1000);
 			  			  if(!(strncmp(str,"\r\nOK\r\n",6)))
 			  			  {
 			  				printf("state = %d substate = %d \n",state,substate);
@@ -86,7 +84,7 @@ int gsm_init()
 			  		  {
 			  		  case 0:
 			  			  str = send_to_gsm("AT+CPIN?\r");
-			  			//HAL_Delay(1000);
+
 			  			 printf("CPIN \n");
 			  			  if((strstr(str,"READY")!=NULL))
 			  			  {
@@ -114,7 +112,7 @@ int gsm_init()
 			  			{
 			  			  case 0:
 			  				  str =send_to_gsm("AT+CSQ\r");
-			  				  //HAL_Delay(1000);
+
 			  				  printf("CAQ \n");
 			  				  int e=check_signal(str);
 			  				  if((strstr(str,"OK")!=NULL))
@@ -151,7 +149,7 @@ int gsm_init()
 				  		{
 				  		 case 0:
 				  			  str =send_to_gsm("AT+CREG?\r");
-				  			  //HAL_Delay(1000);
+
 				  			  printf("CREG? \n");
 				  			  if((strstr(str,"0,1"))||(strstr(str,"0,6")||(strstr(str,"1,6"))))
 				  			  {
@@ -222,7 +220,7 @@ int gsm_init()
 				  			{
 				  			case 0:
 				  				str = send_to_gsm("AT+COPS?\r");
-				  				//HAL_Delay(1000);
+
 				  				printf("COPS?\n");
 				  				if((strstr(str,"40449")!=NULL))
 				  				{
@@ -275,7 +273,7 @@ int gsm_init()
 				  			{
 				  			case 0:
 				  				str =send_to_gsm("AT+CGDCONT=1,\"IP\",\"jionet\"\r");
-				  				//HAL_Delay(1000);
+
 				  				printf("CGDCONT=1 jio\n");
 				  				if(!(strncmp(str,"\r\nOK\r\n",6)))
 				  				{
@@ -292,7 +290,7 @@ int gsm_init()
 				  				break;
 				  			case 1:
 				  				str =send_to_gsm("AT+CGDCONT=1,\"IP\",\"airtelgprs.com\"\r");
-				  				//HAL_Delay(1000);
+
 				  				printf("CGDCONT=1 airtel\n");
 				  				if(!(strncmp(str,"\r\nOK\r\n",6)))
 				  				{
@@ -321,6 +319,33 @@ int gsm_init()
 	}
 	return 1;
 }
+
+
+int my_check_server()
+{
+	str = send_to_gsm("AT+CIPOPEN?\r");
+	if(strstr(str,"139.59.78.252")!=NULL)
+	{
+		return 0;
+
+	}
+	else
+	{
+		str =send_to_gsm("AT+CIPOPEN=0,\"TCP\",\"139.59.78.252\",52102\r");
+		if((strstr(str,"CIPOPEN: 0,0")!=NULL))
+		{
+			return 0;
+		}
+		else
+		{
+			return 1;
+		}
+
+	}
+}
+
+
+
 int check_server_connection()
 {
 	int state=0,substate=0;
@@ -431,7 +456,7 @@ int connect_tcp_server()
 {
 	int state=0;
 	int substate=0;
-	int count=10;
+	int count=30;
 	while(count--)
 	{
 	switch(state)
@@ -473,7 +498,7 @@ int connect_tcp_server()
 		{
 		case 0:
 			str = send_to_gsm("AT+NETOPEN\r\n");
-			//HAL_Delay(1000);
+
 			printf("NETOPEN\n");
 			if(!(strncmp(str,"\r\nOK\r\n",6)))
 			{
@@ -510,7 +535,7 @@ int connect_tcp_server()
 		{
 		case 0:
 			str =send_to_gsm("AT+CIPOPEN=0,\"TCP\",\"139.59.78.252\",52102\r");
-			//HAL_Delay(1000);
+
 			printf("CIPOPEN\n");
 			if((strstr(str,"CIPOPEN: 0,0")!=NULL))
 				//if(!(strncmp(str,"\r\n+CIPOPEN: 0,0\r\n",6)))
@@ -614,6 +639,64 @@ int check_REG_NETWORK(char *str)
 	return -1;
 }
 
+
+
+int check_signal_quality()
+{
+	str =send_to_gsm("AT+CSQ\r");
+	 printf("CAQ \n");
+	 int e=check_signal(str);
+	 if((strstr(str,"OK")!=NULL))
+	 {
+		 printf("CAQ OK\n");
+		 if(e==0)
+		 {
+			 printf("signal OK\n");
+			 return 0;
+
+		 }
+		 else
+		 {
+			 printf("signal NOT OK\n");
+			 return 1;
+		 }
+	 }
+	 return 1;
+}
+
+
+int get_gsm_init()
+{
+	if(gsm_init()==0)
+	{
+		if(connect_tcp_server()==0)
+				return 0;
+			else
+				return 1;
+	}
+	else
+	{
+		return 1;
+	}
+}
+
+void gsm_actual_server()
+  {
+      int count = 1;
+     while(count<2)
+     {
+     if(get_gsm_init() == 0)
+     {
+            gsm_status = 0;
+            break;
+        }
+        else
+        {
+            count++;
+            gsm_status = 1;
+        }
+    }
+}
 
 char *send_to_gsm(char * command)
 {

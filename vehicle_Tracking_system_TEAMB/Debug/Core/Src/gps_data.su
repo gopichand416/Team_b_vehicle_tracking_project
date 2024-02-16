@@ -1,0 +1,4 @@
+../Core/Src/gps_data.c:36:6:gps_callback	16	static
+../Core/Src/gps_data.c:44:5:get_gps_data	16	static
+../Core/Src/gps_data.c:73:5:gpsData	64	static
+../Core/Src/gps_data.c:133:6:gps_data_extraction	160	static

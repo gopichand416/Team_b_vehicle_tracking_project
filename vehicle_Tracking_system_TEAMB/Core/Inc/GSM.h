@@ -20,10 +20,11 @@ int gsm_init();
 int gsm_disconnect_to_server();
 char* send_to_gsm(char *);
 int send_mesg_to_server(char *,int );
-
-
+int my_check_server();
+int check_signal_quality();
+int get_gsm_init();
+void gsm_actual_server();
 char *send_to_gsm(char *);
-
 int send_mesg_to_server(char *,int );
 
 

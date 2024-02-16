@@ -8,12 +8,13 @@
 #ifndef INC_GPS_H_
 #define INC_GPS_H_
 
+#include<math.h>
+
 typedef struct gpsdata
 {
 	double time;
-	//char time[8];
-	float latitude;
-	float longitude;
+	double latitude;
+	double longitude;
 	double Knots;
 	char Date[9];
 	char N_OR_S;
@@ -23,8 +24,9 @@ typedef struct gpsdata
 	char buffer[100];
 	char particular_flag_data[100];
 }gpsdata;
+
 int get_gps_data();
 int gpsData(gpsdata* );
 void gps_data_extraction(gpsdata* );
 
-#endif /* INC_GPS_H_ */
+#endif
